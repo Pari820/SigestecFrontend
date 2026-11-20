@@ -1,0 +1,53 @@
+<div class="gestiones">
+  <div class="gestiones-botones">
+    <button type="button" class="gestion-ver" (click)="ver()" title="Ver los datos registrados">Ver</button>
+    @if (configuracion.permitirReactivar && !activo || configuracion.permitirReactivar && (registro?.estado === 'CANCELADA' || registro?.estado === 'ANULADA')) {
+      <button type="button" class="gestion-reactivar" [disabled]="guardando()" (click)="reactivar()">Reactivar</button>
+    }
+    @if (configuracion.permitirEditar && activo) {
+      <button type="button" class="gestion-editar" (click)="editar()" title="Corregir datos permitidos">Editar</button>
+    }
+    @if (configuracion.permitirCancelar && activo) {
+      <button type="button" class="gestion-cancelar" [disabled]="guardando()" (click)="retirar('cancelar')">Cancelar</button>
+    }
+    @if (configuracion.permitirEliminar && activo) {
+      <button type="button" class="gestion-eliminar" [disabled]="guardando()" (click)="retirar('eliminar')">
+        {{ configuracion.inactivar ? 'Inactivar' : 'Eliminar' }}
+      </button>
+    }
+  </div>
+  @if (error()) { <p class="gestion-error" role="alert">{{ error() }}</p> }
+  @if (exito()) { <p class="gestion-ok" role="status">{{ exito() }}</p> }
+</div>
+<dialog #modal class="gestion-modal" (close)="editando.set(false)">
+  <div class="gestion-titulo">
+    <h3>{{ editando() ? 'Corregir registro' : 'Consultar registro' }} #{{ registro?.id }}</h3>
+    <button type="button" (click)="cerrar()" aria-label="Cerrar ventana">×</button>
+  </div>
+  @if (configuracion.aviso) { <p class="gestion-aviso">{{ configuracion.aviso }}</p> }
+  @for (campo of campos; track campo.key) {
+    @if (!editando() || (recurso !== 'personal' || campo.key !== 'perfil')) {
+      <label class="gestion-campo">
+        <span>{{ campo.label }}</span>
+        @if (editando()) {
+          @if (campo.largo) {
+            <textarea rows="3" [(ngModel)]="datos[campo.key]" [name]="campo.key"></textarea>
+          } @else {
+            <input [type]="campo.tipo || 'text'" [(ngModel)]="datos[campo.key]" [name]="campo.key" />
+          }
+        } @else {
+          <span class="gestion-valor">{{ registro?.[campo.key] ?? '—' }}</span>
+        }
+      </label>
+    }
+  }
+  @if (error()) { <p class="gestion-error" role="alert">{{ error() }}</p> }
+  <div class="gestion-final">
+    <button type="button" class="gestion-ver" (click)="cerrar()">Cerrar</button>
+    @if (editando()) {
+      <button type="button" class="gestion-editar" [disabled]="guardando()" (click)="guardar()">
+        {{ guardando() ? 'Guardando…' : 'Guardar corrección' }}
+      </button>
+    }
+  </div>
+</dialog>

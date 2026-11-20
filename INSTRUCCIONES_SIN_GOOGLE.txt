@@ -1,0 +1,14 @@
+SIGESTEC - SIN GOOGLE NI GMAIL
+
+Se retiraron: login Google, pantalla de vinculación, enlaces a Google, configuración Google Client ID y scripts de Google Identity.
+Se conserva: login con usuario/contraseña, el panel, la navegación, seis CUS y tabla de Etapas y controles del ATS.
+
+Para ejecutar en Visual Studio Code:
+1. Abrir esta carpeta (contiene package.json).
+2. Ejecutar npm install y npm start.
+3. Abrir http://localhost:4200/login.
+4. Mantener Spring Boot activo en el puerto 8080.
+
+Si el navegador vuelve a /vincular-google, ir directamente a /login y actualizar la página.
+Backend: usar el ZIP sin Google/Gmail entregado junto a este frontend.
+No se requieren cambios en las tablas Oracle para el login local.

@@ -1,0 +1,54 @@
+<div class="page-heading">
+  <h1>Personal de servicios</h1>
+</div>
+<div class="two-cols">
+  <section class="panel">
+    <div class="panel-heading">
+      <h2>Registrar personal</h2>
+    </div>
+    <label>Nombre del colaborador *</label>
+    <input [(ngModel)]="form.nombre" placeholder="Nombres y apellidos" />
+    <label>Perfil *</label>
+    <select [(ngModel)]="form.perfil">
+      <option value="TECNICO">Técnico</option>
+      <option value="SSOMA">SSOMA</option>
+      <option value="APOYO">Personal de apoyo</option>
+    </select>
+    <button class="btn primary" (click)="guardar()">Registrar personal</button>
+    @if (error) {
+      <div class="alert error">{{ error }}</div>
+    }
+    @if (ok) {
+      <div class="alert ok">{{ ok }}</div>
+    }
+  </section>
+  <section class="panel">
+    <div class="panel-heading">
+      <h2>Colaboradores</h2>
+      <span class="counter">{{ items.length }}</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Perfil</th>
+          <th>Estado</th><th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (p of items; track p.id) {
+          <tr>
+            <td>{{ p.nombre }}</td>
+            <td>{{ p.perfil }}</td>
+            <td>{{ p.activo ? 'Activo' : 'Inactivo' }}</td>
+            <td><app-acciones-seguras recurso="personal" [registro]="p" (actualizado)="cargar()" /></td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="4">No hay personal registrado.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+</div>

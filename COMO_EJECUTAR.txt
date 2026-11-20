@@ -1,0 +1,14 @@
+SIGESTEC - Frontend Iteración 1 (interfaz limpia)
+
+1. Descomprime el ZIP en una carpeta nueva.
+2. Abre ESA carpeta en Visual Studio Code: verás package.json en la raíz.
+3. En la terminal de esa carpeta ejecuta npm install.
+4. Después ejecuta npm start.
+5. Abre http://localhost:4200.
+6. Mantén el backend de IntelliJ ejecutándose en http://localhost:8080.
+
+En esta versión se quitó el banner celeste del Panel de control y el texto
+académico visible; permanecen los seis módulos y sus rutas.
+
+Si estás reemplazando el proyecto anterior, detén npm start antes de actualizar
+los archivos y vuelve a iniciarlo después.
