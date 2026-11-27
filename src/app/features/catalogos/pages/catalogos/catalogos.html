@@ -7,6 +7,28 @@
       <h2>Nuevo registro</h2>
     </div>
     @if (esClientes) {
+      <div class="consulta-empresa mb-3">
+        <label for="buscar-empresa">Buscar empresa en el padrón SUNAT</label>
+        <div class="input-group">
+          <input id="buscar-empresa" class="form-control" [(ngModel)]="buscarEmpresa" (keyup.enter)="consultarEmpresa()"
+                 placeholder="RUC o razón social" maxlength="80" />
+          <button type="button" class="btn btn-outline-primary" [disabled]="consultando" (click)="consultarEmpresa()">
+            {{ consultando ? 'Consultando...' : 'Consultar' }}
+          </button>
+        </div>
+        @if (errorConsulta) { <p class="alert error" role="alert">{{ errorConsulta }}</p> }
+        @if (mensajeConsulta) { <p class="form-hint" role="status">{{ mensajeConsulta }}</p> }
+        @if (empresasConsultadas.length) {
+          <div class="resultados-empresas">
+            @for (empresa of empresasConsultadas; track empresa.ruc) {
+              <button type="button" class="resultado-empresa" (click)="seleccionarEmpresa(empresa)">
+                <strong>{{ empresa.razonSocial }}</strong>
+                <small>{{ empresa.ruc }} · {{ empresa.estado }} · {{ empresa.condicion }}</small>
+              </button>
+            }
+          </div>
+        }
+      </div>
       <label>RUC de 11 dígitos</label>
       <input [(ngModel)]="form.ruc" maxlength="11" />
       <label>Razón social</label>
@@ -37,15 +59,15 @@
     <table>
       <thead>
         <tr>
-          <th>ID</th>
+          <th>ID de registro</th>
           <th>Nombre</th>
           <th>Identificador</th><th>Estado</th><th>Acciones</th>
         </tr>
       </thead>
       <tbody>
-        @for (i of items; track i.id) {
+        @for (i of paginados; track i.id) {
           <tr>
-            <td>#{{ i.id }}</td>
+            <td class="table-code">#{{ i.numeroRegistro }}</td>
             <td>{{ i.razonSocial || i.nombre }}</td>
             <td>{{ i.ruc || i.descripcion }}</td>
             <td>{{ i.estado === 'I' ? 'Inactivo' : 'Activo' }}</td>
@@ -58,5 +80,15 @@
         }
       </tbody>
     </table>
+    <div class="table-footer">
+      <span>Mostrando {{ paginados.length }} de {{ items.length }} registros</span>
+      <div class="pagination" aria-label="Páginas del listado">
+        <button type="button" [disabled]="pagina === 1" (click)="irPagina(pagina - 1)" aria-label="Página anterior">‹</button>
+        @for (n of paginas; track n) {
+          <button type="button" [class.current]="n === pagina" (click)="irPagina(n)" [attr.aria-label]="'Página ' + n" [attr.aria-current]="n === pagina ? 'page' : null">{{ n }}</button>
+        }
+        <button type="button" [disabled]="pagina === numeroPaginas" (click)="irPagina(pagina + 1)" aria-label="Página siguiente">›</button>
+      </div>
+    </div>
   </section>
 </div>

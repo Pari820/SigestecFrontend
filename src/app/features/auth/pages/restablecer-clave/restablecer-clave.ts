@@ -13,7 +13,7 @@ export class RestablecerClave {
   private readonly auth = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  // La URL se limpia después de leer el token para no dejarlo en el historial.
+
   private token = this.route.snapshot.queryParamMap.get('token') ?? '';
   nueva = '';
   confirmar = '';
@@ -45,7 +45,7 @@ export class RestablecerClave {
         this.token = '';
         this.nueva = '';
         this.confirmar = '';
-        // Los JWT previos quedan revocados en el backend; limpiar sesión local.
+
         sessionStorage.removeItem('sigestec_sesion');
         this.auth.sesion.set(null);
       },

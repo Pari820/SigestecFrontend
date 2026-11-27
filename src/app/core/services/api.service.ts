@@ -21,6 +21,19 @@ export class ApiService {
   patch<T = any>(ruta: string, body: unknown) {
     return this.http.patch<T>(this.url + ruta, body);
   }
+  blob(ruta: string) { return this.http.get(this.url + ruta, { responseType: 'blob' }); }
+  abrirArchivo(ruta: string) {
+    const ventana = window.open('', '_blank');
+    this.blob(ruta).subscribe({
+      next: (contenido) => {
+        const url = URL.createObjectURL(contenido);
+        if (ventana) ventana.location.replace(url);
+        else window.open(url, '_blank', 'noopener,noreferrer');
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      },
+      error: (e) => { ventana?.close(); alert(this.mensaje(e)); },
+    });
+  }
   descargar(ruta: string, nombre: string) {
     this.http.get(this.url + ruta, { responseType: 'blob' }).subscribe({
       next: (b) => {

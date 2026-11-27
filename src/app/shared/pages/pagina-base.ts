@@ -1,7 +1,9 @@
 import { inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
-/** Estado de presentación reutilizable; no altera el contrato del backend. */
+
+export const REGISTROS_POR_PAGINA = 10;
+
 export abstract class PaginaBase {
   readonly api = inject(ApiService);
   readonly router = inject(Router);
@@ -13,7 +15,7 @@ export abstract class PaginaBase {
   buscar = '';
   filtro = 'Todos';
   pagina = 1;
-  readonly tamanoPagina = 5;
+  readonly tamanoPagina = REGISTROS_POR_PAGINA;
   get vista(): string {
     return this.route.snapshot.data['vista'] || 'listado';
   }
@@ -115,6 +117,22 @@ export abstract class PaginaBase {
         this.guardando.set(false);
       },
     });
+  }
+  protected guardarCorreccionConArchivo(
+    modulo: string, id: number, datos: Record<string, unknown>, pdf: File | null,
+    quitar: boolean, ruta: string,
+  ) {
+    const endpoint = `/gestion/${modulo}/${id}`;
+    const conArchivo = !!pdf || quitar;
+    if (!conArchivo) {
+      this.protegidoCargando(this.api.put(endpoint, datos), 'Cambios guardados', ruta);
+      return;
+    }
+    const fd = new FormData();
+    fd.append('datos', new Blob([JSON.stringify(datos)], { type: 'application/json' }));
+    if (pdf) fd.append('pdf', pdf);
+    fd.append('quitar', String(quitar));
+    this.protegidoCargando(this.api.put(endpoint + '/documento', fd), 'Cambios guardados', ruta);
   }
   actualizarListado(url: string) {
     this.cargarItems(url);

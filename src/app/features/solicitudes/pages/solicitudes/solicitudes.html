@@ -65,10 +65,10 @@
                     [routerLink]="['/solicitudes/ver', i.id]"
                     aria-label="Ver solicitud"
                   >
-                    ◉
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
                   </a>
-                
-                  <app-acciones-seguras recurso="solicitudes" [registro]="i" (actualizado)="actualizarListado('/solicitudes')" />
+
+                  <app-acciones-seguras [mostrarVer]="false" recurso="solicitudes" [registro]="i" (actualizado)="actualizarListado('/solicitudes')" />
                 </div>
               </td>
             </tr>
@@ -91,20 +91,17 @@
       </div>
     </div>
   </div>
-} @else if (vista === 'nuevo') {
+} @else if (vista === 'nuevo' || esEdicion) {
   <div class="form-page">
-    <h1>Nueva solicitud de servicio</h1>
+    <h1>{{ esEdicion ? 'Editar solicitud de servicio' : 'Nueva solicitud de servicio' }}</h1>
+    @if (esEdicion) { <p class="detail-note">El cliente y el tipo de servicio quedan bloqueados. Solo pueden corregirse descripción, observaciones y documento antes de cotizar.</p> }
     <section class="form-section">
-      <h2>Buscar cliente</h2>
-      <input
-        aria-label="Buscar cliente"
-        [(ngModel)]="filtroCliente"
-        placeholder="Busque por razón social o RUC"
-      />
+      <h2>Seleccionar cliente</h2>
       <label for="cliente-sol">Seleccione un cliente *</label>
-      <select id="cliente-sol" [(ngModel)]="form.clienteId">
+      <select id="cliente-sol" [(ngModel)]="form.clienteId" [disabled]="esEdicion">
         <option [ngValue]="null">Seleccione un cliente</option>
-        @for (c of clientesFiltrados; track c.id) {
+        @if (esEdicion && form.clienteId) { <option [ngValue]="form.clienteId">{{ registro?.cliente?.razonSocial || 'Cliente registrado' }}</option> }
+        @for (c of clientesActivos; track c.id) {
           <option [ngValue]="c.id">{{ c.razonSocial }} · {{ c.ruc }}</option>
         }
       </select>
@@ -115,8 +112,9 @@
       <div class="form-grid">
         <div>
           <label for="tipo-sol">TIPO DE SERVICIO *</label>
-          <select id="tipo-sol" [(ngModel)]="form.tipoServicioId">
+          <select id="tipo-sol" [(ngModel)]="form.tipoServicioId" [disabled]="esEdicion">
             <option [ngValue]="null">Seleccione un servicio</option>
+            @if (esEdicion && form.tipoServicioId) { <option [ngValue]="form.tipoServicioId">{{ registro?.tipoServicio?.nombre || 'Servicio registrado' }}</option> }
             @for (t of tiposActivos; track t.id) {
               <option [ngValue]="t.id">{{ t.nombre }}</option>
             }
@@ -143,6 +141,11 @@
       <div class="field-block">
         <label>DOCUMENTO SOLICITUD (PDF, OPCIONAL)</label>
         <input type="file" accept=".pdf,application/pdf" (change)="archivo($event)" />
+        @if (esEdicion && registro?.urlArchivo && !quitarPdf) {
+          <app-documento-adjunto [url]="registro.urlArchivo" [permitirQuitar]="true" (quitar)="quitarPdf = true" />
+        }
+        @if (quitarPdf) { <button class="action-secondary" type="button" (click)="quitarPdf = false">Conservar el archivo anterior</button> }
+        <app-documento-adjunto [archivo]="pdf" [permitirQuitar]="true" (quitar)="pdf = null" />
       </div>
       <div class="field-block">
         <label for="obs-sol">OBSERVACIONES INICIALES</label>
@@ -160,7 +163,7 @@
     <div class="form-actions">
       <a class="action-secondary" routerLink="/solicitudes">Cancelar</a>
       <button class="action-primary" [disabled]="guardando()" (click)="guardar()">
-        {{ guardando() ? 'Guardando...' : '▣ Guardar solicitud' }}
+        {{ guardando() ? 'Guardando...' : (esEdicion ? 'Guardar cambios' : 'Guardar solicitud') }}
       </button>
     </div>
   </div>
@@ -171,6 +174,7 @@
       <a class="action-secondary" routerLink="/solicitudes">Volver al listado</a>
     </div>
     @if (registro) {
+      @if (registro.urlArchivo) { <app-documento-adjunto [url]="registro.urlArchivo" /> }
       <div class="detail-grid">
         <div>
           <label>Cliente</label>

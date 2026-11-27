@@ -32,16 +32,18 @@
         <tbody>
           @for (e of paginados; track e.id) {
             <tr>
-              <td class="table-code">EJE-{{ e.id }}</td>
-              <td>OT-{{ e.ordenTrabajo?.id }}</td>
+              <td class="table-code">{{ e.numeroEjecucion }}</td>
+              <td>{{ e.ordenTrabajo?.numero }}</td>
               <td>{{ e.ordenTrabajo?.solicitud?.cliente?.razonSocial }}</td>
               <td>{{ e.fechaEjecucion?.slice(0, 10) }}</td>
               <td>
                 <span [class]="'status-chip ' + claseEstado(e.estado)">{{ e.estado }}</span>
               </td>
               <td>
-                <a [routerLink]="['/ejecuciones/ver', e.id]">Ver detalle</a>
-                <app-acciones-seguras recurso="ejecuciones" [registro]="e" (actualizado)="actualizarListado('/ejecuciones')" />
+                <div class="row-actions">
+                  <a [routerLink]="['/ejecuciones/ver', e.id]" class="accion-ver-detalle" title="Ver detalles" aria-label="Ver detalles"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></a>
+                <app-acciones-seguras [mostrarVer]="false" recurso="ejecuciones" [registro]="e" (actualizado)="actualizarListado('/ejecuciones')" />
+                </div>
               </td>
             </tr>
           } @empty {
@@ -68,14 +70,15 @@
 } @else if (esDetalle) {
   <div class="form-page">
     <div class="detail-head">
-      <h1>Ejecución EJE-{{ registro?.id }}</h1>
+      <h1>Ejecución {{ registro?.numeroEjecucion }}</h1>
       <a class="action-secondary" routerLink="/ejecuciones">Volver</a>
     </div>
     @if (registro) {
+      @for (ev of registro.evidencias || []; track ev.id) { <app-documento-adjunto [url]="ev.urlArchivo" [nombre]="ev.nombreArchivo || ev.etapa" /> }
       <div class="detail-grid">
         <div>
           <label>Orden de trabajo</label>
-          <strong>OT-{{ registro.ordenTrabajo?.id }}</strong>
+          <strong>{{ registro.ordenTrabajo?.numero }}</strong>
         </div>
         <div>
           <label>Fecha</label>
@@ -136,7 +139,7 @@
 } @else {
   <div class="form-page">
     <div class="detail-head">
-      <h1>Nueva ejecución del servicio</h1>
+      <h1>{{ esEdicion ? 'Editar ejecución' : 'Nueva ejecución' }} del servicio</h1>
       <a class="action-secondary" routerLink="/ejecuciones">Volver</a>
     </div>
     <section class="form-section">
@@ -144,11 +147,12 @@
       <div class="form-grid">
         <div class="full">
           <label>OT PROGRAMADA CON ATS APROBADO *</label>
-          <select [(ngModel)]="form.ordenTrabajoId">
+          <select [(ngModel)]="form.ordenTrabajoId" [disabled]="esEdicion">
+            @if (esEdicion) { <option [ngValue]="form.ordenTrabajoId">{{ actual?.numero || form.ordenTrabajoId }}</option> }
             <option [ngValue]="null">Seleccione una orden de trabajo</option>
             @for (o of elegibles; track o.id) {
               <option [ngValue]="o.id">
-                OT-{{ o.id }} · {{ o.solicitud?.cliente?.razonSocial }}
+                {{ o.numero }} · {{ o.solicitud?.cliente?.razonSocial }}
               </option>
             }
           </select>
@@ -178,6 +182,7 @@
     </section>
     <section class="form-section">
       <h2>Evidencia fotográfica *</h2>
+      @if (esEdicion) { <p class="detail-note">Las fotografías anteriores se conservan y puedes revisarlas en el detalle. No se cambian durante una corrección de textos.</p> }
       <p class="help">Registra al menos una fotografía; se aceptan PNG y JPG.</p>
       <div class="form-grid">
         <div>
@@ -185,31 +190,34 @@
           <input
             type="file"
             accept=".png,.jpg,.jpeg,image/png,image/jpeg"
-            (change)="archivo($event, 'antes')"
+            (change)="archivo($event, 'antes')" [disabled]="esEdicion"
           />
+            <app-documento-adjunto [archivo]="fotos.antes" [permitirQuitar]="true" (quitar)="fotos.antes = null" />
         </div>
         <div>
           <label>DURANTE</label>
           <input
             type="file"
             accept=".png,.jpg,.jpeg,image/png,image/jpeg"
-            (change)="archivo($event, 'durante')"
+            (change)="archivo($event, 'durante')" [disabled]="esEdicion"
           />
+            <app-documento-adjunto [archivo]="fotos.durante" [permitirQuitar]="true" (quitar)="fotos.durante = null" />
         </div>
         <div>
           <label>DESPUÉS</label>
           <input
             type="file"
             accept=".png,.jpg,.jpeg,image/png,image/jpeg"
-            (change)="archivo($event, 'despues')"
+            (change)="archivo($event, 'despues')" [disabled]="esEdicion"
           />
+            <app-documento-adjunto [archivo]="fotos.despues" [permitirQuitar]="true" (quitar)="fotos.despues = null" />
         </div>
       </div>
     </section>
     <section class="form-section">
       <div class="section-header">
         <h2>Materiales utilizados (opcional)</h2>
-        <button class="outlined-link" (click)="agregarMaterial()">＋ Añadir material</button>
+        <button class="outlined-link" (click)="agregarMaterial()" [disabled]="esEdicion">＋ Añadir material</button>
       </div>
       <p class="help">
         La declaración no descuenta stock; el movimiento físico se registra en Almacén.
@@ -219,7 +227,7 @@
           <div class="form-grid">
             <div>
               <label>MATERIAL *</label>
-              <select [(ngModel)]="m.materialId">
+              <select [(ngModel)]="m.materialId" [disabled]="esEdicion">
                 <option [ngValue]="null">Seleccione material</option>
                 @for (x of materiales(); track x.id) {
                   <option [ngValue]="x.id">
@@ -230,10 +238,10 @@
             </div>
             <div>
               <label>CANTIDAD REAL *</label>
-              <input type="number" min="0.01" step="0.01" [(ngModel)]="m.cantidadReal" />
+              <input type="number" min="0.01" step="0.01" [(ngModel)]="m.cantidadReal" [disabled]="esEdicion" />
             </div>
           </div>
-          <button class="link-danger" (click)="quitarMaterial(i)">Quitar</button>
+          <button class="link-danger" (click)="quitarMaterial(i)" [disabled]="esEdicion">Quitar</button>
         </div>
       }
     </section>
@@ -243,7 +251,7 @@
     <div class="form-actions">
       <a class="action-secondary" routerLink="/ejecuciones">Cancelar</a>
       <button [disabled]="guardando()" class="action-primary" (click)="guardar()">
-        Registrar ejecución
+        {{ esEdicion ? 'Guardar cambios' : 'Registrar ejecución' }}
       </button>
     </div>
   </div>

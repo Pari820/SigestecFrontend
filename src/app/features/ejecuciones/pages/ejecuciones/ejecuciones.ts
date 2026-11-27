@@ -1,4 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { DocumentoAdjunto } from '../../../../shared/components/documento-adjunto/documento-adjunto';
+import { ChangeDetectorRef, Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { PaginaBase } from '../../../../shared/pages/pagina-base';
@@ -6,11 +7,12 @@ import { AccionesSeguras } from '../../../../shared/components/acciones-seguras/
 
 @Component({
   standalone: true,
-  imports: [FormsModule, RouterLink, AccionesSeguras],
+  imports: [DocumentoAdjunto, FormsModule, RouterLink, AccionesSeguras],
   templateUrl: './ejecuciones.html',
   styleUrl: './ejecuciones.css',
 })
 export class Ejecuciones extends PaginaBase implements OnInit {
+  private cdr=inject(ChangeDetectorRef);
   ordenes = signal<any[]>([]);
   ats = signal<any[]>([]);
   materiales = signal<any[]>([]);
@@ -31,6 +33,16 @@ export class Ejecuciones extends PaginaBase implements OnInit {
   };
   ngOnInit() {
     this.cargarItems('/ejecuciones');
+    if(this.esEdicion) this.api.get<any[]>('/ejecuciones').subscribe({
+      next: lista=>{
+        const x=lista.find(v=>v.id===this.id);
+        if(!x){this.error.set('Ejecución no encontrada');return;}
+        this.form={ordenTrabajoId:x.ordenTrabajo?.id,descripcion:x.descripcion||'',
+          mediciones:x.mediciones||'',observaciones:x.observaciones||'',
+          materiales:[]};
+        this.cdr.markForCheck();
+      }, error:e=>this.error.set(this.api.mensaje(e)),
+    });
     this.api
       .get<any[]>('/ordenes-trabajo')
       .subscribe({
@@ -41,7 +53,7 @@ export class Ejecuciones extends PaginaBase implements OnInit {
     this.api.get<any[]>('/almacen/materiales').subscribe({ next: (x) => this.materiales.set(x) });
   }
   override textoBusqueda(x: any) {
-    return `${x.id} ${x.ordenTrabajo?.id} ${x.ordenTrabajo?.solicitud?.cliente?.razonSocial} ${x.descripcion}`;
+    return `${x.numeroEjecucion || ''} ${x.ordenTrabajo?.numero || ''} ${x.ordenTrabajo?.solicitud?.cliente?.razonSocial} ${x.descripcion}`;
   }
   get elegibles() {
     return this.ordenes().filter(
@@ -68,6 +80,14 @@ export class Ejecuciones extends PaginaBase implements OnInit {
   }
   guardar() {
     this.error.set('');
+    if (this.esEdicion) {
+      if(!this.form.descripcion.trim()){this.error.set('La descripción es obligatoria');return;}
+      this.protegidoCargando(this.api.put('/gestion/ejecuciones/'+this.id,{
+        descripcion:this.form.descripcion,mediciones:this.form.mediciones,
+        observaciones:this.form.observaciones,
+      }),'Ejecución corregida','/ejecuciones');
+      return;
+    }
     if (!this.form.ordenTrabajoId || !this.form.descripcion.trim()) {
       this.error.set('Selecciona una OT con ATS aprobado y describe el trabajo ejecutado.');
       return;

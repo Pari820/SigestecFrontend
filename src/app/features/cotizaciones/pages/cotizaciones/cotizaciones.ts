@@ -1,23 +1,25 @@
+import { DocumentoAdjunto } from '../../../../shared/components/documento-adjunto/documento-adjunto';
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { PaginaBase } from '../../../../shared/pages/pagina-base';
-import { AccionesSeguras } from '../../../../shared/components/acciones-seguras/acciones-seguras';
 type Linea = {
   descripcion: string;
   cantidad: number;
   precioUnitario: number;
-  unidadMedida: string;
+  // Campo interno conservado para compatibilidad con datos históricos; no aparece en el formulario.
+  unidadMedida?: string;
 };
 @Component({
   standalone: true,
-  imports: [FormsModule, RouterLink, AccionesSeguras],
+  imports: [DocumentoAdjunto, FormsModule, RouterLink],
   templateUrl: './cotizaciones.html',
   styleUrl: './cotizaciones.css',
 })
 export class Cotizaciones extends PaginaBase implements OnInit {
   solicitudes = signal<any[]>([]);
   pdf: File | null = null;
+  quitarPdf = false;
   form: {
     solicitudId: number | null;
     descripcionTrabajo: string;
@@ -66,7 +68,7 @@ export class Cotizaciones extends PaginaBase implements OnInit {
       });
   }
   override textoBusqueda(x: any) {
-    return `${x.id} ${x.solicitud?.cliente?.razonSocial || ''} ${x.descripcionTrabajo || ''}`;
+    return `${x.numero || ''} ${x.id} ${x.solicitud?.cliente?.razonSocial || ''} ${x.descripcionTrabajo || ''}`;
   }
   get pendientes() {
     return this.solicitudes().filter((s) => ['PENDIENTE', 'COTIZADA'].includes(s.estado));
@@ -88,6 +90,7 @@ export class Cotizaciones extends PaginaBase implements OnInit {
   }
   archivo(e: Event) {
     this.pdf = (e.target as HTMLInputElement).files?.item(0) || null;
+    if(this.pdf)this.quitarPdf=false;
   }
   agregarDetalle() {
     this.form.detalles.push({
@@ -118,6 +121,7 @@ export class Cotizaciones extends PaginaBase implements OnInit {
     const fd = new FormData();
     fd.append('datos', new Blob([JSON.stringify(datos)], { type: 'application/json' }));
     if (this.pdf) fd.append('pdf', this.pdf);
+    if (this.esEdicion) fd.append('quitarPdf', String(this.quitarPdf));
     const req = this.esEdicion
       ? this.api.put('/cotizaciones/' + this.id, fd)
       : this.api.post('/cotizaciones', fd);

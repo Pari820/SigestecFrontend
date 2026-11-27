@@ -4,8 +4,11 @@
     <section class="recovery-card">
       <h1>Nueva contraseña</h1>
       @if (completado()) {
-        <p class="recovery-success" role="status">Contraseña actualizada correctamente.
-          Ya puedes iniciar sesión con tu nueva contraseña.</p>
+        <div class="recovery-confirmation" role="status">
+          <div class="recovery-confirmation-icon" aria-hidden="true">✓</div>
+          <h2>Contraseña actualizada</h2>
+          <p>Ya puedes iniciar sesión utilizando tu nueva contraseña.</p>
+        </div>
         <a routerLink="/login" class="recovery-back">Ir al inicio de sesión</a>
       } @else if (!tieneToken) {
         <p class="recovery-error" role="alert">Este enlace no es válido o no tiene token.</p>

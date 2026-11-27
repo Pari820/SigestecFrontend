@@ -1,12 +1,12 @@
+import { DocumentoAdjunto } from '../../../../shared/components/documento-adjunto/documento-adjunto';
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { PaginaBase } from '../../../../shared/pages/pagina-base';
-import { AccionesSeguras } from '../../../../shared/components/acciones-seguras/acciones-seguras';
 
 @Component({
   standalone: true,
-  imports: [FormsModule, RouterLink, AccionesSeguras],
+  imports: [DocumentoAdjunto, FormsModule, RouterLink],
   templateUrl: './asignaciones.html',
   styleUrl: './asignaciones.css',
 })
@@ -61,7 +61,10 @@ export class Asignaciones extends PaginaBase implements OnInit {
       });
   }
   override textoBusqueda(x: any) {
-    return `${x.id} ${x.solicitud?.cliente?.razonSocial} ${x.tecnico?.nombre} ${x.ssoma?.nombre}`;
+    return `${x.numero || ''} ${x.solicitud?.codigo || ''} ${x.solicitud?.cliente?.razonSocial} ${x.tecnico?.nombre} ${x.ssoma?.nombre}`;
+  }
+  get registroActual() {
+    return this.items().find((o) => o.id === this.id);
   }
   get pendientes() {
     return this.solicitudes().filter(

@@ -1,2 +1,7 @@
-/* Estilos globales del proyecto: src/styles.css.
-   Agrega aquí los estilos propios de esta pantalla. */
+.personal-dni {
+  margin-bottom: 0.25rem;
+}
+
+.personal-dni .btn {
+  white-space: nowrap;
+}

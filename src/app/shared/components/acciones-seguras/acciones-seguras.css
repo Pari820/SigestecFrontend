@@ -1,9 +1,6 @@
 .gestiones{max-width:340px}.gestiones-botones{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
 .gestiones-botones button,.gestion-final button,.gestion-titulo button{font:inherit;cursor:pointer;border-radius:5px;border:1px solid #bed2d7;padding:5px 8px;background:#fff;color:#075c67}
 .gestiones-botones .gestion-editar,.gestion-final .gestion-editar{background:#006e78;color:white;border-color:#006e78}
-.gestiones-botones .gestion-cancelar{background:#fff7d9;color:#795006;border-color:#ead79b}
-.gestiones-botones .gestion-reactivar{background:#e3f6e9;color:#17653d;border-color:#b6d9c3}
-.gestiones-botones .gestion-eliminar{background:#fff0f0;color:#a12727;border-color:#edb7b7}
 .gestiones-botones button:disabled{opacity:.5;cursor:wait}
 .gestion-error,.gestion-ok{font-size:12px;line-height:1.4;margin:5px 0;max-width:340px}.gestion-error{color:#b52121}.gestion-ok{color:#146b39}
 .gestion-modal{border:1px solid #d6e3e7;border-radius:10px;padding:23px;width:min(520px,90vw);max-height:85vh;overflow-y:auto;box-shadow:0 15px 48px #102e3955;color:#20383f}
@@ -14,3 +11,8 @@
 .gestion-campo input,.gestion-campo textarea{width:100%;box-sizing:border-box;padding:9px;border:1px solid #aabbc0;border-radius:6px;font:inherit;font-weight:400}
 .gestion-valor{font-size:14px;font-weight:400;color:#36505a;white-space:pre-wrap;overflow-wrap:anywhere}
 .gestion-final{justify-content:flex-end;margin-top:20px}
+
+.gestiones-botones button { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 5px; background: transparent; border: 0; color: #085867; }
+.gestiones-botones .gestion-editar { background: transparent; border: 0; color: #085867; }
+.gestiones-botones button:hover { color: #0bb4b3; background: #f0f7f8; }
+.gestiones-botones button svg { display: block; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }

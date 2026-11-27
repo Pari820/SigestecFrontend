@@ -34,7 +34,7 @@
       <table class="data-table">
         <thead>
           <tr>
-            <th>ORDEN DE COMPRA</th>
+            <th>CÓDIGO INTERNO / DOCUMENTO</th>
             <th>CLIENTE</th>
             <th>COTIZACIÓN</th>
             <th>FECHA EMISIÓN</th>
@@ -45,9 +45,9 @@
         <tbody>
           @for (o of paginados; track o.id) {
             <tr>
-              <td class="table-code">{{ o.numero }}</td>
+              <td class="table-code"><strong>{{ o.codigo }}</strong><div class="form-hint">Documento: {{ o.numero }}</div></td>
               <td>{{ o.cotizacion?.solicitud?.cliente?.razonSocial }}</td>
-              <td>COT-{{ o.cotizacion?.id }}</td>
+              <td>{{ o.cotizacion?.numero }}</td>
               <td>{{ o.fechaEmision }}</td>
               <td>S/ {{ o.montoTotal }}</td>
               <td>
@@ -56,13 +56,10 @@
                     [routerLink]="['/compras/ver', o.id]"
                     title="Ver registro"
                     aria-label="Ver orden"
-                    >◉</a
+                    ><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></a
                   >
-                  <button (click)="descargar(o)" title="Descargar PDF" aria-label="Descargar PDF">
-                    ↓
-                  </button>
-                
-                  <app-acciones-seguras recurso="compras" [registro]="o" (actualizado)="actualizarListado('/ordenes-compra')" />
+
+                  <app-acciones-seguras [mostrarVer]="false" recurso="compras" [registro]="o" (actualizado)="actualizarListado('/ordenes-compra')" />
                 </div>
               </td>
             </tr>
@@ -88,22 +85,27 @@
 } @else if (esDetalle) {
   <div class="form-page">
     <div class="detail-head">
-      <h1>Orden de compra {{ registro?.numero }}</h1>
+      <h1>Orden de compra {{ registro?.codigo }}</h1>
       <a class="action-secondary" routerLink="/compras">Volver</a>
     </div>
     @if (registro) {
+      @if (registro.urlArchivo) { <app-documento-adjunto [url]="registro.urlArchivo" /> }
       <div class="detail-grid">
         <div>
           <label>Cliente</label>
           <strong>{{ registro.cotizacion?.solicitud?.cliente?.razonSocial }}</strong>
         </div>
         <div>
-          <label>Número</label>
+          <label>Código interno SIGESTEC</label>
+          <strong>{{ registro.codigo }}</strong>
+        </div>
+        <div>
+          <label>Número del documento del cliente</label>
           <strong>{{ registro.numero }}</strong>
         </div>
         <div>
           <label>Cotización</label>
-          <strong>#{{ registro.cotizacion?.id }}</strong>
+          <strong>{{ registro.cotizacion?.numero }}</strong>
         </div>
         <div>
           <label>Fecha de emisión</label>
@@ -114,6 +116,18 @@
           <strong>S/ {{ registro.montoTotal }}</strong>
         </div>
       </div>
+      @if (registro.detalles?.length) {
+        <h2>Detalle de la orden de compra</h2>
+        <div class="table-wrap"><table class="data-table">
+          <thead><tr><th>Ítem</th><th>Descripción</th><th>Cantidad</th><th>Precio unitario</th><th>Importe</th></tr></thead>
+          <tbody>
+            @for (d of registro.detalles; track d.id) {
+              <tr><td>{{ d.item }}</td><td>{{ d.descripcion }}</td><td>{{ d.cantidad }}</td>
+                <td>S/ {{ d.precioUnitario }}</td><td>S/ {{ d.subtotal }}</td></tr>
+            }
+          </tbody>
+        </table></div>
+      }
       <button class="action-primary detail-download" (click)="descargar(registro)">
         Descargar PDF
       </button>
@@ -123,42 +137,46 @@
   </div>
 } @else {
   <div class="form-page">
-    <h1>Nueva orden de compra</h1>
+    <h1>{{ esEdicion ? 'Editar orden de compra' : 'Nueva orden de compra' }}</h1>
+    @if (esEdicion) { <p class="detail-note">Cotización, fecha, monto y detalle están protegidos. Puedes corregir el número y reemplazar el PDF antes de crear una orden de trabajo.</p> }
     <section class="form-section">
       <h2>Datos de la orden de compra</h2>
       <div class="form-grid">
         <div class="full">
           <label>COTIZACIÓN ACEPTADA *</label>
-          <select [(ngModel)]="form.cotizacionId" (ngModelChange)="seleccionarCotizacion()">
+          <select [(ngModel)]="form.cotizacionId" (ngModelChange)="seleccionarCotizacion()" [disabled]="esEdicion">
+            @if (esEdicion && form.cotizacionId) { <option [ngValue]="form.cotizacionId">{{ registroActual?.cotizacion?.numero || form.cotizacionId }}</option> }
             <option [ngValue]="null">Seleccione cotización aceptada</option>
             @for (c of aceptadas; track c.id) {
               <option [ngValue]="c.id">
-                COT-{{ c.id }} · {{ c.solicitud?.cliente?.razonSocial }}
+                {{ c.numero }} · {{ c.solicitud?.cliente?.razonSocial }}
               </option>
             }
           </select>
         </div>
         <div>
-          <label>NÚMERO DE ORDEN *</label>
-          <input [(ngModel)]="form.numero" placeholder="OC-2026-001" />
+          <label>NÚMERO DEL DOCUMENTO DE COMPRA DEL CLIENTE *</label>
+          <input [(ngModel)]="form.numero" placeholder="Número que figura en el documento del cliente" />
         </div>
         <div>
           <label>FECHA DE EMISIÓN *</label>
-          <input type="date" [(ngModel)]="form.fechaEmision" />
+          <input type="date" [(ngModel)]="form.fechaEmision" [disabled]="esEdicion" />
         </div>
         <div>
           <label>MONTO TOTAL (S/) *</label>
-          <input type="number" min="0.01" step="0.01" [(ngModel)]="form.montoTotal" />
+          <input type="number" min="0.01" step="0.01" [(ngModel)]="form.montoTotal" [disabled]="esEdicion" />
         </div>
         <div>
           <label>DOCUMENTO PDF *</label>
           <input type="file" accept=".pdf,application/pdf" (change)="archivo($event)" />
+        @if (esEdicion && registro?.urlArchivo) { <app-documento-adjunto [url]="registro.urlArchivo" /> }
+        <app-documento-adjunto [archivo]="pdf" [permitirQuitar]="true" (quitar)="pdf = null" />
           <p class="help">Archivo PDF de hasta 8 MB.</p>
         </div>
       </div>
       @if (actual) {
         <p class="detail-note">
-          Cotización #{{ actual.id }} · Solicitud #{{ actual.solicitud?.id }}
+          Cotización {{ actual.numero }} · Solicitud {{ actual.solicitud?.codigo }}
         </p>
         <div class="section-header">
           <h2>Detalle de la orden de compra</h2>
@@ -193,7 +211,7 @@
     <div class="form-actions">
       <a class="action-secondary" routerLink="/compras">Cancelar</a>
       <button [disabled]="guardando()" class="action-primary" (click)="guardar()">
-        Guardar orden de compra
+        {{ esEdicion ? 'Guardar cambios' : 'Guardar orden de compra' }}
       </button>
     </div>
   </div>

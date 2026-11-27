@@ -11,5 +11,6 @@ export const solicitudesRoutes: Routes = [
     'nuevo',
     'Nueva solicitud de servicio',
   ),
+  pantalla('solicitudes/editar/:id', Solicitudes, ROLES_COMERCIAL, 'editar', 'Editar solicitud'),
   pantalla('solicitudes/ver/:id', Solicitudes, ROLES_COMERCIAL, 'detalle', 'Detalle de solicitud'),
 ];

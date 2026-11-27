@@ -1,4 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { DocumentoAdjunto } from '../../../../shared/components/documento-adjunto/documento-adjunto';
+import { ChangeDetectorRef, Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { PaginaBase } from '../../../../shared/pages/pagina-base';
@@ -6,11 +7,12 @@ import { AccionesSeguras } from '../../../../shared/components/acciones-seguras/
 
 @Component({
   standalone: true,
-  imports: [FormsModule, RouterLink, AccionesSeguras],
+  imports: [DocumentoAdjunto, FormsModule, RouterLink, AccionesSeguras],
   templateUrl: './ats.html',
   styleUrl: './ats.css',
 })
 export class AtsPage extends PaginaBase implements OnInit {
+  private cdr=inject(ChangeDetectorRef);
   ordenes = signal<any[]>([]);
   catalogoPeligros = [
     'Riesgo eléctrico',
@@ -44,8 +46,22 @@ export class AtsPage extends PaginaBase implements OnInit {
   };
   otro = '';
   pdf: File | null = null;
+  quitarPdf = false;
   ngOnInit() {
     this.cargarItems('/ats');
+    if (this.esEdicion) this.api.get<any[]>('/ats').subscribe({
+      next: registros=>{
+        const x=registros.find(v=>v.id===this.id);
+        if(!x){this.error.set('ATS no encontrado');return;}
+        this.form={ ...this.form,ordenTrabajoId:x.ordenTrabajo?.id,
+          condicionesArea:x.condicionesArea||'',observaciones:x.observaciones||'',
+          peligros:String(x.peligros||'').split(' | ').filter(Boolean),
+          epp:String(x.epp||'').split(' | ').filter(Boolean),
+          herramientas:x.herramientas||'',etapas:x.etapas||[],
+        };
+        this.cdr.markForCheck();
+      },error:e=>this.error.set(this.api.mensaje(e)),
+    });
     this.api
       .get<any[]>('/ordenes-trabajo')
       .subscribe({
@@ -53,7 +69,7 @@ export class AtsPage extends PaginaBase implements OnInit {
         error: (e) => this.error.set(this.api.mensaje(e)),
       });
   }
-  // Las etapas provienen de DETALLE_ANALISIS_RIESGO, no de JSON persistido en Oracle.
+
   get etapasDetalle(): {
     etapa: string;
     peligro: string;
@@ -65,7 +81,7 @@ export class AtsPage extends PaginaBase implements OnInit {
     return Array.isArray(datos) ? datos : [];
   }
   override textoBusqueda(x: any) {
-    return `${x.id} ${x.ordenTrabajo?.id} ${x.ordenTrabajo?.solicitud?.cliente?.razonSocial} ${x.peligros || ''}`;
+    return `${x.numero || ''} ${x.id} ${x.ordenTrabajo?.numero || ''} ${x.ordenTrabajo?.solicitud?.cliente?.razonSocial} ${x.peligros || ''}`;
   }
   get elegibles() {
     return this.ordenes().filter(
@@ -77,6 +93,7 @@ export class AtsPage extends PaginaBase implements OnInit {
   }
   archivo(e: Event) {
     this.pdf = (e.target as HTMLInputElement).files?.item(0) || null;
+    if(this.pdf)this.quitarPdf=false;
   }
   descargarPDF(a: any) {
     const file = String(a.urlArchivo || '')
@@ -107,6 +124,13 @@ export class AtsPage extends PaginaBase implements OnInit {
     if (this.form.etapas.length > 1) this.form.etapas.splice(i, 1);
   }
   guardar() {
+    if (this.esEdicion) {
+      if (!this.form.condicionesArea?.trim()) {this.error.set('Las condiciones del área son obligatorias');return;}
+      this.guardarCorreccionConArchivo('ats',this.id,{
+        condicionesArea:this.form.condicionesArea,observaciones:this.form.observaciones||'',
+      },this.pdf,this.quitarPdf,'/ats');
+      return;
+    }
     if (
       !this.form.ordenTrabajoId ||
       !this.form.condicionesArea.trim() ||

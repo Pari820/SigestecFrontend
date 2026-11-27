@@ -1,0 +1,16 @@
+.audit-subtitle { color: #64748b; margin: 4px 0 0; font-size: 14px; }
+.audit-filters { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+.audit-field { display: flex; flex-direction: column; gap: 5px; flex: 1 1 155px; min-width: 135px; }
+.audit-field label { font-weight: 600; font-size: 12px; color: #334155; }
+.audit-field input, .audit-field select { width: 100%; min-width: 0; border: 1px solid #cbd5e1; border-radius: 7px; padding: 10px; background: white; color: #1e293b; }
+.audit-clear, .audit-pager button { border: 1px solid #cbd5e1; background: white; color: #1e293b; border-radius: 7px; padding: 9px 12px; cursor: pointer; }
+.audit-clear:disabled, .audit-pager button:disabled { opacity: .45; cursor: not-allowed; }
+.audit-table { min-width: 900px; }
+.audit-table td { overflow-wrap: anywhere; font-size: 13px; }
+.audit-action { font-weight: 600; font-size: 12px; color: #135b70; }
+.audit-id { font-family: ui-monospace, monospace; color: #64748b; }
+.audit-loading { font-size: 13px; color: #475569; padding: 10px; }
+.audit-pager { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding: 16px; color: #475569; font-size: 12px; }
+.audit-pager-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+.audit-pager select { border: 1px solid #cbd5e1; border-radius: 6px; background: white; padding: 8px; }
+@media (max-width: 750px) { .audit-field { flex-basis: 45%; } }

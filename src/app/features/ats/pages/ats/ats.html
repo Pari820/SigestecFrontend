@@ -1,6 +1,6 @@
 @if (enListado) {
   <div class="page-title-row">
-    <h1>Elaborar ATS</h1>
+    <h1>Registrar ATS</h1>
     <a class="action-primary" routerLink="/ats/nuevo">＋ Nuevo ATS</a>
   </div>
   <section class="filters-card">
@@ -42,8 +42,8 @@
         <tbody>
           @for (a of paginados; track a.id) {
             <tr>
-              <td class="table-code">ATS-{{ a.id }}</td>
-              <td>OT-{{ a.ordenTrabajo?.id }}</td>
+              <td class="table-code">{{ a.numero }}</td>
+              <td>{{ a.ordenTrabajo?.numero }}</td>
               <td>{{ a.ordenTrabajo?.solicitud?.cliente?.razonSocial }}</td>
               <td>{{ a.fechaElaboracion }}</td>
               <td>
@@ -51,9 +51,9 @@
               </td>
               <td>
                 <div class="row-actions">
-                  <a [routerLink]="['/ats/ver', a.id]" title="Ver ATS" aria-label="Ver ATS">◉</a>
-                
-                  <app-acciones-seguras recurso="ats" [registro]="a" (actualizado)="actualizarListado('/ats')" />
+                  <a [routerLink]="['/ats/ver', a.id]" title="Ver ATS" aria-label="Ver ATS"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></a>
+
+                  <app-acciones-seguras [mostrarVer]="false" recurso="ats" [registro]="a" (actualizado)="actualizarListado('/ats')" />
                 </div>
               </td>
             </tr>
@@ -82,14 +82,15 @@
 } @else if (esDetalle) {
   <div class="form-page">
     <div class="detail-head">
-      <h1>ATS-{{ registro?.id }}</h1>
+      <h1>{{ registro?.numero }}</h1>
       <a class="action-secondary" routerLink="/ats">Volver</a>
     </div>
     @if (registro) {
+      @if (registro.urlArchivo) { <app-documento-adjunto [url]="registro.urlArchivo" /> }
       <div class="detail-grid">
         <div>
           <label>Orden de trabajo</label>
-          <strong>OT-{{ registro.ordenTrabajo?.id }}</strong>
+          <strong>{{ registro.ordenTrabajo?.numero }}</strong>
         </div>
         <div>
           <label>Cliente</label>
@@ -176,17 +177,19 @@
   </div>
 } @else {
   <div class="form-page">
-    <h1>Nuevo Análisis de Trabajo Seguro</h1>
+    <h1>{{ esEdicion ? 'Editar ATS' : 'Registrar ATS' }}</h1>
+    @if (esEdicion) { <p class="detail-note">La OT, los peligros, EPP y etapas quedan bloqueados por seguridad. Solo se corrigen las condiciones del área, las observaciones y el archivo.</p> }
     <section class="form-section">
       <h2>Identificación e inspección</h2>
       <div class="form-grid">
         <div class="full">
           <label>ORDEN DE TRABAJO PROGRAMADA *</label>
-          <select [(ngModel)]="form.ordenTrabajoId">
+          <select [(ngModel)]="form.ordenTrabajoId" [disabled]="esEdicion">
+            @if (esEdicion) { <option [ngValue]="form.ordenTrabajoId">{{ actual?.numero || form.ordenTrabajoId }}</option> }
             <option [ngValue]="null">Seleccione una OT</option>
             @for (o of elegibles; track o.id) {
               <option [ngValue]="o.id">
-                OT-{{ o.id }} · {{ o.solicitud?.cliente?.razonSocial }}
+                {{ o.numero }} · {{ o.solicitud?.cliente?.razonSocial }}
               </option>
             }
           </select>
@@ -212,15 +215,15 @@
             <input
               type="checkbox"
               [checked]="form.peligros.includes(p)"
-              (change)="marcar('peligros', p, $event)"
+              (change)="marcar('peligros', p, $event)" [disabled]="esEdicion"
             />
             {{ p }}
           </label>
         }
       </div>
       <div class="inline-input">
-        <input [(ngModel)]="otro" placeholder="Agregar otro peligro" />
-        <button class="action-secondary" type="button" (click)="agregarPeligro()">Agregar</button>
+        <input [(ngModel)]="otro" placeholder="Agregar otro peligro" [disabled]="esEdicion" />
+        <button class="action-secondary" type="button" (click)="agregarPeligro()" [disabled]="esEdicion">Agregar</button>
       </div>
       <h3>Equipo de protección personal (EPP) *</h3>
       <div class="choice-grid">
@@ -229,7 +232,7 @@
             <input
               type="checkbox"
               [checked]="form.epp.includes(p)"
-              (change)="marcar('epp', p, $event)"
+              (change)="marcar('epp', p, $event)" [disabled]="esEdicion"
             />
             {{ p }}
           </label>
@@ -237,13 +240,13 @@
       </div>
       <div class="field-block">
         <label>HERRAMIENTAS Y EQUIPOS</label>
-        <textarea rows="2" [(ngModel)]="form.herramientas"></textarea>
+        <textarea rows="2" [(ngModel)]="form.herramientas" [disabled]="esEdicion"></textarea>
       </div>
     </section>
     <section class="form-section">
       <div class="section-header">
         <h2>Etapas y medidas de control</h2>
-        <button type="button" class="outlined-link" (click)="agregarEtapa()">
+        <button type="button" class="outlined-link" (click)="agregarEtapa()" [disabled]="esEdicion">
           ＋ Agregar etapa
         </button>
       </div>
@@ -253,7 +256,7 @@
             <strong>Etapa {{ i + 1 }}</strong>
             <button
               type="button"
-              [disabled]="form.etapas.length === 1"
+              [disabled]="esEdicion || form.etapas.length === 1"
               class="link-danger"
               (click)="quitarEtapa(i)"
             >
@@ -263,19 +266,19 @@
           <div class="form-grid">
             <div>
               <label>ETAPA *</label>
-              <input [(ngModel)]="e.etapa" />
+              <input [(ngModel)]="e.etapa" [disabled]="esEdicion" />
             </div>
             <div>
               <label>PELIGRO *</label>
-              <input [(ngModel)]="e.peligro" />
+              <input [(ngModel)]="e.peligro" [disabled]="esEdicion" />
             </div>
             <div>
               <label>RIESGO *</label>
-              <input [(ngModel)]="e.riesgo" />
+              <input [(ngModel)]="e.riesgo" [disabled]="esEdicion" />
             </div>
             <div>
               <label>NIVEL *</label>
-              <select [(ngModel)]="e.nivel">
+              <select [(ngModel)]="e.nivel" [disabled]="esEdicion">
                 <option>BAJO</option>
                 <option>MEDIO</option>
                 <option>ALTO</option>
@@ -283,16 +286,23 @@
             </div>
             <div class="full">
               <label>MEDIDA DE CONTROL *</label>
-              <textarea [(ngModel)]="e.medidaControl" rows="2"></textarea>
+              <textarea [(ngModel)]="e.medidaControl" [disabled]="esEdicion" rows="2"></textarea>
             </div>
           </div>
         </div>
       }
     </section>
     <section class="form-section">
+      @if (esEdicion) {
+        <div class="field-block"><label>OBSERVACIONES</label>
+          <textarea rows="3" [(ngModel)]="form.observaciones"></textarea></div>
+      }
       <h2>Archivo del análisis (opcional)</h2>
       <label>ADJUNTAR PDF</label>
       <input type="file" accept=".pdf,application/pdf" (change)="archivo($event)" />
+        @if (esEdicion && registro?.urlArchivo && !quitarPdf) { <app-documento-adjunto [url]="registro.urlArchivo" [permitirQuitar]="true" (quitar)="quitarPdf = true" /> }
+        @if (quitarPdf) { <button type="button" class="action-secondary" (click)="quitarPdf=false">Conservar documento anterior</button> }
+        <app-documento-adjunto [archivo]="pdf" [permitirQuitar]="true" (quitar)="pdf = null" />
     </section>
     @if (error()) {
       <p class="alert error" role="alert">{{ error() }}</p>
@@ -300,7 +310,7 @@
     <div class="form-actions">
       <a class="action-secondary" routerLink="/ats">Cancelar</a>
       <button [disabled]="guardando()" class="action-primary" (click)="guardar()">
-        Guardar ATS elaborado
+        {{ esEdicion ? 'Guardar cambios' : 'Registrar ATS' }}
       </button>
     </div>
   </div>

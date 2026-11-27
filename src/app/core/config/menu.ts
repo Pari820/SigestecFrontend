@@ -1,4 +1,4 @@
-/* Enlaces del panel principal de SIGESTEC. */
+
 export const MODULOS_INICIO = [
   { nombre: 'Solicitudes', ruta: '/solicitudes', roles: ['GERENTE'] },
   { nombre: 'Cotizaciones', ruta: '/cotizaciones', roles: ['GERENTE'] },

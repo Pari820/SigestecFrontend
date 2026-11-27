@@ -1,5 +1,6 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
 
 type Campo = { key: string; label: string; largo?: boolean; tipo?: 'number' };
@@ -7,14 +8,10 @@ type Campo = { key: string; label: string; largo?: boolean; tipo?: 'number' };
 type Configuracion = {
   campos: Campo[];
   permitirEditar?: boolean;
-  permitirEliminar?: boolean;
-  permitirCancelar?: boolean;
-  inactivar?: boolean;
-  permitirReactivar?: boolean;
   aviso?: string;
 };
 
-/** Solo admite campos específicos. Los permisos y las relaciones se verifican siempre en Spring Boot. */
+
 const MODULOS: Record<string, Configuracion> = {
   solicitudes: {
     campos: [
@@ -22,21 +19,19 @@ const MODULOS: Record<string, Configuracion> = {
       { key: 'observaciones', label: 'Observaciones', largo: true },
       { key: 'lugarServicio', label: 'Lugar del servicio' },
     ],
-    permitirEditar: true, permitirEliminar: true, permitirCancelar: true, permitirReactivar: true,
+    permitirEditar: true,
   },
   cotizaciones: {
     campos: [{ key: 'numero', label: 'Número' }, { key: 'estado', label: 'Estado' }],
-    permitirEliminar: true, permitirCancelar: true,
     aviso: 'La edición de importes y detalles se hace desde el formulario completo de Cotizaciones.',
   },
   compras: {
     campos: [{ key: 'numero', label: 'Número de OC' }, { key: 'estado', label: 'Estado' }],
-    permitirEditar: true, permitirCancelar: true, permitirReactivar: true,
+    permitirEditar: true,
     aviso: 'Una OC formal nunca se elimina. Solo puede anularse si todavía no tiene orden de trabajo.',
   },
   'ordenes-trabajo': {
     campos: [{ key: 'numero', label: 'Número de OT' }, { key: 'estado', label: 'Estado' }, { key: 'lugar', label: 'Lugar' }],
-    permitirCancelar: true, permitirReactivar: true,
     aviso: 'El personal se edita en Asignaciones y el horario en Programaciones. La OT queda protegida si hay ATS, documentos, movimientos o ejecución.',
   },
   ats: {
@@ -76,25 +71,25 @@ const MODULOS: Record<string, Configuracion> = {
   },
   clientes: {
     campos: [{ key: 'razonSocial', label: 'Razón social' }, { key: 'telefono', label: 'Teléfono' }, { key: 'correo', label: 'Correo' }],
-    permitirEditar: true, permitirEliminar: true, inactivar: true, permitirReactivar: true,
+    permitirEditar: true,
   },
   'tipos-servicio': {
     campos: [{ key: 'nombre', label: 'Tipo de servicio' }, { key: 'descripcion', label: 'Descripción' }],
-    permitirEditar: true, permitirEliminar: true, inactivar: true, permitirReactivar: true,
+    permitirEditar: true,
   },
   personal: {
     campos: [{ key: 'nombre', label: 'Nombre completo' }, { key: 'perfil', label: 'Perfil (no editable)' }],
-    permitirEditar: true, permitirEliminar: true, inactivar: true, permitirReactivar: true,
+    permitirEditar: true,
     aviso: 'No es posible desactivar empleados con cuentas activas o asignaciones de trabajo.',
   },
   materiales: {
     campos: [{ key: 'nombre', label: 'Material' }, { key: 'unidadMedida', label: 'Unidad' }, { key: 'stockMinimo', label: 'Stock mínimo', tipo: 'number' }],
-    permitirEditar: true, permitirEliminar: true, inactivar: true, permitirReactivar: true,
+    permitirEditar: true,
     aviso: 'El stock actual se ajusta solo mediante movimientos; no se modifica desde este formulario.',
   },
   herramientas: {
     campos: [{ key: 'nombre', label: 'Herramienta' }, { key: 'descripcion', label: 'Descripción' }],
-    permitirEditar: true, permitirEliminar: true, inactivar: true, permitirReactivar: true,
+    permitirEditar: true,
     aviso: 'No se cambian directamente las cantidades ni se borra el historial de préstamos.',
   },
   'movimientos-materiales': {
@@ -117,10 +112,20 @@ const MODULOS: Record<string, Configuracion> = {
 export class AccionesSeguras {
   @Input({ required: true }) recurso = '';
   @Input({ required: true }) registro: any;
+  @Input() mostrarVer = true;
   @Output() actualizado = new EventEmitter<void>();
   @ViewChild('modal') modal!: ElementRef<HTMLDialogElement>;
 
+  get identificadorRegistro(): string | number {
+    const r = this.registro || {};
+    if (['clientes', 'tipos-servicio', 'personal'].includes(this.recurso) && r.numeroRegistro != null) {
+      return '#' + r.numeroRegistro;
+    }
+    return r.codigo || r.numero || r.numeroInforme || r.numeroEjecucion || r.atsNumero || r.numeroActa || r.id || '—';
+  }
+
   private readonly api = inject(ApiService);
+  private readonly router = inject(Router);
   readonly error = signal('');
   readonly exito = signal('');
   readonly guardando = signal(false);
@@ -135,10 +140,11 @@ export class AccionesSeguras {
     this.modal.nativeElement.showModal();
   }
   editar() {
-    this.error.set(''); this.exito.set(''); this.editando.set(true);
-    const campos = this.recurso === 'personal' ? this.campos.filter(c => c.key === 'nombre') : this.campos;
-    this.datos = Object.fromEntries(campos.map(c => [c.key, this.registro?.[c.key] ?? '']));
-    this.modal.nativeElement.showModal();
+    const nativos = ['solicitudes', 'cotizaciones', 'compras', 'ats', 'informes', 'ejecuciones'];
+    const ruta = nativos.includes(this.recurso)
+      ? `/${this.recurso}/editar/${this.registro.id}`
+      : `/gestion/editar/${this.recurso}/${this.registro.id}`;
+    this.router.navigateByUrl(ruta);
   }
   cerrar() { this.modal.nativeElement.close(); this.editando.set(false); }
   guardar() {
@@ -152,26 +158,5 @@ export class AccionesSeguras {
       error: (e) => { this.guardando.set(false); this.error.set(this.api.mensaje(e)); },
     });
   }
-  reactivar() {
-    if (!window.confirm('¿Reactivar este registro conservando el historial existente?')) return;
-    this.error.set(''); this.exito.set(''); this.guardando.set(true);
-    this.api.patch<{ mensaje: string }>(`/gestion/${this.recurso}/${this.registro.id}/reactivar`, {}).subscribe({
-      next: (r) => { this.guardando.set(false); this.exito.set(r.mensaje); this.actualizado.emit(); },
-      error: (e) => { this.guardando.set(false); this.error.set(this.api.mensaje(e)); },
-    });
-  }
-  retirar(accion: 'eliminar' | 'cancelar') {
-    const baja = this.configuracion.inactivar;
-    const nombre = baja ? 'inactivar' : accion === 'cancelar' ? 'cancelar' : 'eliminar definitivamente';
-    if (!window.confirm(`¿Deseas ${nombre} este registro? SIGESTEC impedirá la operación si afecta a otros procesos.`)) return;
-    this.error.set(''); this.exito.set(''); this.guardando.set(true);
-    const ruta = `/gestion/${this.recurso}/${this.registro.id}`;
-    const llamada = accion === 'eliminar'
-      ? this.api.delete<{ mensaje: string }>(ruta)
-      : this.api.patch<{ mensaje: string }>(ruta + '/cancelar', {});
-    llamada.subscribe({
-      next: (r) => { this.guardando.set(false); this.exito.set(r.mensaje); this.actualizado.emit(); },
-      error: (e) => { this.guardando.set(false); this.error.set(this.api.mensaje(e)); },
-    });
-  }
+
 }

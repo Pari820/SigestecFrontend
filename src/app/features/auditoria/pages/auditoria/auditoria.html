@@ -1,0 +1,77 @@
+<div class="page-title-row">
+  <div>
+    <h1>Auditoría del sistema</h1>
+    <p class="audit-subtitle">Historial de operaciones y accesos de SIGESTEC (solo administradores).</p>
+  </div>
+</div>
+
+<section class="filters-card audit-filters" aria-label="Filtros de auditoría">
+  <div class="audit-field">
+    <label for="aud-usuario">Usuario</label>
+    <input id="aud-usuario" [(ngModel)]="usuario" placeholder="Nombre de usuario" (keyup.enter)="filtrar()" />
+  </div>
+  <div class="audit-field">
+    <label for="aud-accion">Acción</label>
+    <select id="aud-accion" [(ngModel)]="accion" (change)="filtrar()">
+      <option value="">Todas las acciones</option>
+      @for (a of acciones; track a) { <option [value]="a">{{ a }}</option> }
+    </select>
+  </div>
+  <div class="audit-field">
+    <label for="aud-desde">Desde</label>
+    <input id="aud-desde" type="date" [(ngModel)]="desde" />
+  </div>
+  <div class="audit-field">
+    <label for="aud-hasta">Hasta</label>
+    <input id="aud-hasta" type="date" [(ngModel)]="hasta" />
+  </div>
+  <button type="button" class="action-primary" (click)="filtrar()" [disabled]="cargando()">Filtrar</button>
+  <button type="button" class="audit-clear" (click)="limpiar()" [disabled]="cargando()">Limpiar</button>
+</section>
+
+@if (error()) { <div class="alert error" role="alert">{{ error() }}</div> }
+@if (cargando()) { <p class="audit-loading" aria-live="polite">Cargando historial de auditoría…</p> }
+
+<div class="list-card">
+  <div class="table-wrap">
+    <table class="data-table audit-table">
+      <thead>
+        <tr>
+          <th>FECHA</th><th>USUARIO</th><th>ACCIÓN</th><th>ENTIDAD</th>
+          <th>ID</th><th>DETALLE</th><th>REQUEST ID</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of registros()?.contenido ?? []; track r.id) {
+          <tr>
+            <td>{{ r.fecha | date:'dd/MM/yyyy HH:mm:ss' }}</td>
+            <td>{{ r.usuario }}</td>
+            <td><span class="audit-action">{{ r.accion }}</span></td>
+            <td>{{ r.entidad }}</td>
+            <td>{{ r.entidadId ?? '—' }}</td>
+            <td>{{ r.detalle || '—' }}</td>
+            <td class="audit-id">{{ r.requestId || '—' }}</td>
+          </tr>
+        } @empty {
+          <tr><td colspan="7" class="empty-row">No se encontraron eventos con los filtros seleccionados.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <div class="audit-pager">
+    <span>Registros: {{ registros()?.totalElementos ?? 0 }}</span>
+    <div class="audit-pager-controls">
+      <label for="aud-filas">Filas</label>
+      <select id="aud-filas" [(ngModel)]="tamanio" (change)="cambiarTamanio()">
+        <option [ngValue]="10">10</option>
+        <option [ngValue]="20">20</option>
+        <option [ngValue]="50">50</option>
+      </select>
+      <button type="button" (click)="irPagina(0)" [disabled]="pagina === 0 || cargando()">Primera</button>
+      <button type="button" (click)="irPagina(pagina - 1)" [disabled]="pagina === 0 || cargando()">Anterior</button>
+      <span>Página {{ (registros()?.totalPaginas ?? 0) === 0 ? 0 : pagina + 1 }} de {{ registros()?.totalPaginas ?? 0 }}</span>
+      <button type="button" (click)="irPagina(pagina + 1)" [disabled]="!!registros()?.ultima || cargando()">Siguiente</button>
+      <button type="button" (click)="irPagina((registros()?.totalPaginas ?? 1) - 1)" [disabled]="!!registros()?.ultima || cargando()">Última</button>
+    </div>
+  </div>
+</div>

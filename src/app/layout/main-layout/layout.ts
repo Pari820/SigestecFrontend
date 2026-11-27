@@ -30,12 +30,12 @@ export class Layout {
   comercial = false;
   planificacion = false;
   ats = false;
-  ejecucion = true; // Sección desplegada en el prototipo proporcionado.
+  ejecucion = true;
   almacen = false;
   parametros = false;
   constructor() {
-    // Calcula contra el reloj real, no restando un segundo por tick.
-    // Esto también corrige el tiempo cuando el navegador suspende una pestaña.
+
+
     interval(1000)
       .pipe(startWith(0), takeUntilDestroyed())
       .subscribe(() => {

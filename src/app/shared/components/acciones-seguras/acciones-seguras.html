@@ -1,19 +1,10 @@
 <div class="gestiones">
   <div class="gestiones-botones">
-    <button type="button" class="gestion-ver" (click)="ver()" title="Ver los datos registrados">Ver</button>
-    @if (configuracion.permitirReactivar && !activo || configuracion.permitirReactivar && (registro?.estado === 'CANCELADA' || registro?.estado === 'ANULADA')) {
-      <button type="button" class="gestion-reactivar" [disabled]="guardando()" (click)="reactivar()">Reactivar</button>
+    @if (mostrarVer) {
+      <button type="button" class="gestion-ver" (click)="ver()" title="Ver registro" aria-label="Ver registro"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
     }
     @if (configuracion.permitirEditar && activo) {
-      <button type="button" class="gestion-editar" (click)="editar()" title="Corregir datos permitidos">Editar</button>
-    }
-    @if (configuracion.permitirCancelar && activo) {
-      <button type="button" class="gestion-cancelar" [disabled]="guardando()" (click)="retirar('cancelar')">Cancelar</button>
-    }
-    @if (configuracion.permitirEliminar && activo) {
-      <button type="button" class="gestion-eliminar" [disabled]="guardando()" (click)="retirar('eliminar')">
-        {{ configuracion.inactivar ? 'Inactivar' : 'Eliminar' }}
-      </button>
+      <button type="button" class="gestion-editar" (click)="editar()" title="Editar registro" aria-label="Editar registro"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5 4 4M4 20l4.5-.9L20 7.6 16.4 4 4.9 15.5 4 20Z"/></svg></button>
     }
   </div>
   @if (error()) { <p class="gestion-error" role="alert">{{ error() }}</p> }
@@ -21,7 +12,7 @@
 </div>
 <dialog #modal class="gestion-modal" (close)="editando.set(false)">
   <div class="gestion-titulo">
-    <h3>{{ editando() ? 'Corregir registro' : 'Consultar registro' }} #{{ registro?.id }}</h3>
+    <h3>{{ editando() ? 'Corregir registro' : 'Consultar registro' }} {{ identificadorRegistro }}</h3>
     <button type="button" (click)="cerrar()" aria-label="Cerrar ventana">×</button>
   </div>
   @if (configuracion.aviso) { <p class="gestion-aviso">{{ configuracion.aviso }}</p> }

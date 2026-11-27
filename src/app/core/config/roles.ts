@@ -1,4 +1,4 @@
-/** Roles habilitados para las pantallas, sin modificar las restricciones originales. */
+
 export const ROLES_COMERCIAL: string[] = ['GERENTE'];
 export const ROLES_PLAN: string[] = ['SUPERVISOR'];
 export const ROLES_ATS: string[] = ['SSOMA'];

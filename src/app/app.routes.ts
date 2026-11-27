@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { EditorRegistro } from './shared/pages/editor-registro/editor-registro';
 import { Layout } from './layout/main-layout/layout';
 import { authGuard } from './core/guards/auth-guard';
 import { authRoutes } from './features/auth/auth.routes';
@@ -17,6 +18,7 @@ import { ejecucionesRoutes } from './features/ejecuciones/ejecuciones.routes';
 import { informesRoutes } from './features/informes/informes.routes';
 import { conformidadesRoutes } from './features/conformidades/conformidades.routes';
 import { almacenRoutes } from './features/almacen/almacen.routes';
+import { auditoriaRoutes } from './features/auditoria/auditoria.routes';
 
 export const routes: Routes = [
   ...authRoutes,
@@ -40,6 +42,8 @@ export const routes: Routes = [
       ...informesRoutes,
       ...conformidadesRoutes,
       ...almacenRoutes,
+      ...auditoriaRoutes,
+      { path:'gestion/editar/:recurso/:id', component:EditorRegistro, title:'Editar registro | SIGESTEC' },
       { path: 'acceso-denegado', component: Inicio, data: { denegado: true } },
     ],
   },

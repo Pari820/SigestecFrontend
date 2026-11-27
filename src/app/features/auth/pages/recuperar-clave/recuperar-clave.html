@@ -4,10 +4,13 @@
     <section class="recovery-card">
       <h1>Recuperar contraseña</h1>
       @if (enviado()) {
-        <p class="recovery-success" role="status">
-          Si la cuenta existe y tiene correo autorizado, recibirás un enlace en unos minutos.
-          Revisa también la carpeta de correo no deseado.
-        </p>
+        <div class="recovery-confirmation" role="status">
+          <div class="recovery-confirmation-icon" aria-hidden="true">✓</div>
+          <h2>Revisa tu correo</h2>
+          <p>Si el usuario tiene un correo autorizado, recibirá un enlace temporal para crear una nueva contraseña.</p>
+          <p class="recovery-security-note">El enlace dura 15 minutos y solo puede utilizarse una vez.</p>
+          <small>Comprueba también Spam o Correo no deseado.</small>
+        </div>
       } @else {
         <p class="recovery-muted">Escribe el usuario con el que inicias sesión en SIGESTEC.
           Te enviaremos un enlace de recuperación al correo autorizado.</p>

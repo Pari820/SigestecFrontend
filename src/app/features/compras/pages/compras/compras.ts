@@ -1,16 +1,20 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { DocumentoAdjunto } from '../../../../shared/components/documento-adjunto/documento-adjunto';
+import { ChangeDetectorRef, Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { PaginaBase } from '../../../../shared/pages/pagina-base';
 import { AccionesSeguras } from '../../../../shared/components/acciones-seguras/acciones-seguras';
 
+type DetalleCompra = { descripcion: string; cantidad: number; precioUnitario: number; unidadMedida: string };
+
 @Component({
   standalone: true,
-  imports: [FormsModule, RouterLink, AccionesSeguras],
+  imports: [DocumentoAdjunto, FormsModule, RouterLink, AccionesSeguras],
   templateUrl: './compras.html',
   styleUrl: './compras.css',
 })
 export class Compras extends PaginaBase implements OnInit {
+  private cdr=inject(ChangeDetectorRef);
   cotizaciones = signal<any[]>([]);
   form = {
     cotizacionId: null as number | null,
@@ -19,14 +23,23 @@ export class Compras extends PaginaBase implements OnInit {
     montoTotal: 0,
   };
   pdf: File | null = null;
-  detalles: {
-    descripcion: string;
-    cantidad: number;
-    precioUnitario: number;
-    unidadMedida: string;
-  }[] = [];
+  quitarPdf = false;
+  detalles: DetalleCompra[] = [];
   ngOnInit() {
     this.cargarItems('/ordenes-compra');
+    if (this.esEdicion) this.api.get<any[]>('/ordenes-compra').subscribe({
+      next: registros => {
+        const x = registros.find(v => v.id === this.id);
+        if (!x) { this.error.set('Orden de compra no encontrada'); return; }
+        this.form = {cotizacionId:x.cotizacion?.id||null,numero:x.numero,
+          fechaEmision:String(x.fechaEmision||''),montoTotal:Number(x.montoTotal)};
+        this.detalles = (x.detalles||[]).map((d:any)=>({
+          descripcion:d.descripcion,cantidad:Number(d.cantidad),
+          precioUnitario:Number(d.precioUnitario),unidadMedida:d.unidadMedida||'SERVICIO',
+        }));
+        this.cdr.markForCheck();
+      },error:e=>this.error.set(this.api.mensaje(e)),
+    });
     this.api
       .get<any[]>('/cotizaciones')
       .subscribe({
@@ -35,10 +48,13 @@ export class Compras extends PaginaBase implements OnInit {
       });
   }
   override textoBusqueda(x: any) {
-    return `${x.id} ${x.numero} ${x.cotizacion?.solicitud?.cliente?.razonSocial}`;
+    return `${x.codigo || ''} ${x.numero} ${x.cotizacion?.numero || ''} ${x.cotizacion?.solicitud?.cliente?.razonSocial}`;
   }
   override estadoDe(x: any) {
     return x.cotizacion?.estado || '';
+  }
+  get registroActual() {
+    return this.items().find((x) => x.id === this.id);
   }
   get aceptadas() {
     return this.cotizaciones().filter(
@@ -61,6 +77,12 @@ export class Compras extends PaginaBase implements OnInit {
     this.pdf = (e.target as HTMLInputElement).files?.item(0) || null;
   }
   guardar() {
+    if (this.esEdicion) {
+      if (!this.form.numero.trim()) { this.error.set('Indica el número de orden'); return; }
+      this.guardarCorreccionConArchivo('compras', this.id, {numero:this.form.numero},
+        this.pdf, false, '/compras');
+      return;
+    }
     if (
       !this.form.cotizacionId ||
       !this.form.numero.trim() ||
@@ -68,6 +90,10 @@ export class Compras extends PaginaBase implements OnInit {
       !(this.form.montoTotal > 0)
     ) {
       this.error.set('Completa los campos obligatorios de la orden de compra.');
+      return;
+    }
+    if (this.detalles.some(d => !d.descripcion.trim() || !(d.cantidad > 0) || d.precioUnitario < 0)) {
+      this.error.set('Revisa las descripciones, cantidades y precios de los detalles antes de registrar la orden.');
       return;
     }
     if (

@@ -1,6 +1,6 @@
 @if (enListado) {
   <div class="page-title-row">
-    <h1>Elaborar informe técnico</h1>
+    <h1>Registrar informe técnico</h1>
     <a class="action-primary" routerLink="/informes/nuevo">＋ Nuevo informe</a>
   </div>
   <section class="filters-card">
@@ -29,15 +29,17 @@
           @for (i of paginados; track i.id) {
             <tr>
               <td class="table-code">{{ i.numeroInforme }}</td>
-              <td>OT-{{ i.ordenTrabajo?.id }}</td>
+              <td>{{ i.ordenTrabajo?.numero }}</td>
               <td>{{ i.ordenTrabajo?.solicitud?.cliente?.razonSocial }}</td>
               <td>{{ i.fechaEnvio }}</td>
               <td>
                 <span [class]="'status-chip ' + claseEstado(i.estado)">{{ i.estado }}</span>
               </td>
               <td>
-                <a [routerLink]="['/informes/ver', i.id]">Ver detalle</a>
-                <app-acciones-seguras recurso="informes" [registro]="i" (actualizado)="actualizarListado('/informes')" />
+                <div class="row-actions">
+                  <a [routerLink]="['/informes/ver', i.id]" class="accion-ver-detalle" title="Ver detalles" aria-label="Ver detalles"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></a>
+                <app-acciones-seguras [mostrarVer]="false" recurso="informes" [registro]="i" (actualizado)="actualizarListado('/informes')" />
+                </div>
               </td>
             </tr>
           } @empty {
@@ -68,10 +70,12 @@
       <a class="action-secondary" routerLink="/informes">Volver</a>
     </div>
     @if (registro) {
+      @for (ev of registro.evidencias || []; track ev.id) { <app-documento-adjunto [url]="ev.urlArchivo" [nombre]="ev.nombreArchivo" /> }
+      @if (registro.urlArchivo) { <app-documento-adjunto [url]="registro.urlArchivo" /> }
       <div class="detail-grid">
         <div>
           <label>Orden de trabajo</label>
-          <strong>OT-{{ registro.ordenTrabajo?.id }}</strong>
+          <strong>{{ registro.ordenTrabajo?.numero }}</strong>
         </div>
         <div>
           <label>Fecha de envío</label>
@@ -115,7 +119,8 @@
 } @else {
   <div class="form-page">
     <div class="detail-head">
-      <h1>Nuevo informe técnico</h1>
+      <h1>{{ esEdicion ? 'Editar informe técnico' : 'Registrar informe técnico' }}</h1>
+      @if (esEdicion) { <p class="detail-note">La OT, el número y la fecha de envío permanecen bloqueados. Se permiten correcciones técnicas antes de la conformidad.</p> }
       <a class="action-secondary" routerLink="/informes">Volver</a>
     </div>
     <section class="form-section">
@@ -123,22 +128,34 @@
       <div class="form-grid">
         <div class="full">
           <label>OT CON EJECUCIÓN REGISTRADA *</label>
-          <select [(ngModel)]="form.ordenTrabajoId">
+          <select [ngModel]="form.ordenTrabajoId" (ngModelChange)="seleccionarOt($event)" [disabled]="esEdicion">
+            @if (esEdicion) { <option [ngValue]="form.ordenTrabajoId">{{ actual?.ordenTrabajo?.numero || form.ordenTrabajoId }}</option> }
             <option [ngValue]="null">Seleccione la OT</option>
             @for (e of elegibles; track e.id) {
               <option [ngValue]="e.ordenTrabajo?.id">
-                OT-{{ e.ordenTrabajo?.id }} · {{ e.ordenTrabajo?.solicitud?.cliente?.razonSocial }}
+                {{ e.ordenTrabajo?.numero }} · {{ e.ordenTrabajo?.solicitud?.cliente?.razonSocial }}
               </option>
             }
           </select>
         </div>
         <div>
-          <label>NÚMERO DE INFORME (opcional)</label>
-          <input [(ngModel)]="form.numeroInforme" placeholder="Automático si se deja vacío" />
+          <label>NÚMERO DE INFORME (AUTOMÁTICO)</label>
+          <p class="form-hint">El número de informe se asignará automáticamente al guardar.</p>
         </div>
         <div>
           <label>FECHA DE ENVÍO AL CLIENTE *</label>
-          <input type="date" [(ngModel)]="form.fechaEnvio" />
+          <input type="date" [(ngModel)]="form.fechaEnvio"
+            [attr.min]="fechaMinimaInforme || null"
+            [disabled]="esEdicion || !actual || !fechaMinimaInforme" />
+          @if (!esEdicion && actual && fechaMinimaInforme) {
+            <p class="form-hint">Elige una fecha posterior al fin del trabajo, desde {{ fechaMinimaInforme }}.</p>
+          }
+          @if (!esEdicion && form.fechaEnvio && fechaMinimaInforme && form.fechaEnvio < fechaMinimaInforme) {
+            <p class="form-hint" role="alert">La fecha elegida es anterior a la finalización del trabajo.</p>
+          }
+          @if (!esEdicion && actual && !fechaMinimaInforme) {
+            <p class="form-hint">La OT seleccionada no tiene una fecha de fin programada.</p>
+          }
         </div>
       </div>
       @if (actual) {
@@ -169,12 +186,16 @@
     </section>
     <section class="form-section">
       <h2>Adjuntos opcionales</h2>
+      @for (foto of fotos; track $index) { <app-documento-adjunto [archivo]="foto" [permitirQuitar]="true" (quitar)="quitarFoto($index)" /> }
       <div class="form-grid">
         <div>
           <label>INFORME EN PDF</label>
           <input type="file" accept=".pdf,application/pdf" (change)="archivo($event)" />
+        @if (esEdicion && registro?.urlArchivo && !quitarPdf) { <app-documento-adjunto [url]="registro.urlArchivo" [permitirQuitar]="true" (quitar)="quitarPdf = true" /> }
+        @if (quitarPdf) { <button type="button" class="action-secondary" (click)="quitarPdf=false">Conservar documento anterior</button> }
+        <app-documento-adjunto [archivo]="pdf" [permitirQuitar]="true" (quitar)="pdf = null" />
         </div>
-        <div>
+        @if (!esEdicion) { <div>
           <label>FOTOGRAFÍAS ADICIONALES</label>
           <input
             type="file"
@@ -182,7 +203,7 @@
             accept=".png,.jpg,.jpeg,image/png,image/jpeg"
             (change)="fotosSeleccionadas($event)"
           />
-        </div>
+        </div> }
       </div>
     </section>
     @if (error()) {
@@ -191,7 +212,7 @@
     <div class="form-actions">
       <a class="action-secondary" routerLink="/informes">Cancelar</a>
       <button [disabled]="guardando()" class="action-primary" (click)="guardar()">
-        Registrar informe
+        {{ esEdicion ? 'Guardar cambios' : 'Registrar informe' }}
       </button>
     </div>
   </div>
