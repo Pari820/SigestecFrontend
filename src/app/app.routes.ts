@@ -1,11 +1,7 @@
 import { Routes } from '@angular/router';
-import { EditorRegistro } from './shared/pages/editor-registro/editor-registro';
-import { Layout } from './layout/main-layout/layout';
 import { authGuard } from './core/guards/auth-guard';
 import { authRoutes } from './features/auth/auth.routes';
 import { inicioRoutes } from './features/inicio/inicio.routes';
-import { Inicio } from './features/inicio/pages/inicio/inicio';
-import { CambiarClave } from './features/auth/pages/cambiar-clave/cambiar-clave';
 import { catalogosRoutes } from './features/catalogos/catalogos.routes';
 import { personalRoutes } from './features/personal/personal.routes';
 import { solicitudesRoutes } from './features/solicitudes/solicitudes.routes';
@@ -24,12 +20,12 @@ export const routes: Routes = [
   ...authRoutes,
   {
     path: '',
-    component: Layout,
+    loadComponent: () => import('./layout/main-layout/layout').then(m => m.Layout),
     canActivate: [authGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'inicio' },
       ...inicioRoutes,
-      { path: 'mi-cuenta/cambiar-clave', component: CambiarClave, title: 'Cambiar contraseña | SIGESTEC' },
+      { path: 'mi-cuenta/cambiar-clave', loadComponent: () => import('./features/auth/pages/cambiar-clave/cambiar-clave').then(m => m.CambiarClave), title: 'Cambiar contraseña | SIGESTEC' },
       ...catalogosRoutes,
       ...personalRoutes,
       ...solicitudesRoutes,
@@ -43,8 +39,8 @@ export const routes: Routes = [
       ...conformidadesRoutes,
       ...almacenRoutes,
       ...auditoriaRoutes,
-      { path:'gestion/editar/:recurso/:id', component:EditorRegistro, title:'Editar registro | SIGESTEC' },
-      { path: 'acceso-denegado', component: Inicio, data: { denegado: true } },
+      { path:'gestion/editar/:recurso/:id', loadComponent: () => import('./shared/pages/editor-registro/editor-registro').then(m => m.EditorRegistro), title:'Editar registro | SIGESTEC' },
+      { path: 'acceso-denegado', loadComponent: () => import('./features/inicio/pages/inicio/inicio').then(m => m.Inicio), data: { denegado: true } },
     ],
   },
   { path: '**', redirectTo: 'inicio' },

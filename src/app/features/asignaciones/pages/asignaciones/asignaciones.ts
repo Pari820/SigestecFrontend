@@ -1,4 +1,3 @@
-import { DocumentoAdjunto } from '../../../../shared/components/documento-adjunto/documento-adjunto';
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -6,7 +5,7 @@ import { PaginaBase } from '../../../../shared/pages/pagina-base';
 
 @Component({
   standalone: true,
-  imports: [DocumentoAdjunto, FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink],
   templateUrl: './asignaciones.html',
   styleUrl: './asignaciones.css',
 })

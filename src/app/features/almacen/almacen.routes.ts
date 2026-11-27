@@ -1,47 +1,44 @@
-import { DetalleOperativo } from '../../shared/pages/detalle-operativo/detalle-operativo';
 import { Routes } from '@angular/router';
-import { MaterialesAlmacen } from './pages/materiales-almacen/materiales-almacen';
-import { HerramientasAlmacen } from './pages/herramientas-almacen/herramientas-almacen';
 import { ROLES_ALMACEN } from '../../core/config/roles';
-import { pantalla } from '../../shared/utils/pantalla-route';
+import { pantallaLazy } from '../../shared/utils/pantalla-route';
 export const almacenRoutes: Routes = [
-  pantalla('almacen/materiales/ver/:id', DetalleOperativo, ROLES_ALMACEN, 'detalle', 'Detalle material'),
-  pantalla('almacen/materiales/movimientos/ver/:id', DetalleOperativo, ROLES_ALMACEN, 'detalle', 'Detalle movimiento material'),
-  pantalla('almacen/herramientas/ver/:id', DetalleOperativo, ROLES_ALMACEN, 'detalle', 'Detalle herramienta'),
-  pantalla('almacen/herramientas/movimientos/ver/:id', DetalleOperativo, ROLES_ALMACEN, 'detalle', 'Detalle movimiento herramienta'),
+  pantallaLazy('almacen/materiales/ver/:id', () => import('../../shared/pages/detalle-operativo/detalle-operativo').then(m => m.DetalleOperativo), ROLES_ALMACEN, 'detalle', 'Detalle material'),
+  pantallaLazy('almacen/materiales/movimientos/ver/:id', () => import('../../shared/pages/detalle-operativo/detalle-operativo').then(m => m.DetalleOperativo), ROLES_ALMACEN, 'detalle', 'Detalle movimiento material'),
+  pantallaLazy('almacen/herramientas/ver/:id', () => import('../../shared/pages/detalle-operativo/detalle-operativo').then(m => m.DetalleOperativo), ROLES_ALMACEN, 'detalle', 'Detalle herramienta'),
+  pantallaLazy('almacen/herramientas/movimientos/ver/:id', () => import('../../shared/pages/detalle-operativo/detalle-operativo').then(m => m.DetalleOperativo), ROLES_ALMACEN, 'detalle', 'Detalle movimiento herramienta'),
 
-  pantalla('almacen/materiales', MaterialesAlmacen, ROLES_ALMACEN, 'listado', 'Almacén materiales'),
-  pantalla(
+  pantallaLazy('almacen/materiales', () => import('./pages/materiales-almacen/materiales-almacen').then(m => m.MaterialesAlmacen), ROLES_ALMACEN, 'listado', 'Almacén materiales'),
+  pantallaLazy(
     'almacen/materiales/nuevo',
-    MaterialesAlmacen,
+    () => import('./pages/materiales-almacen/materiales-almacen').then(m => m.MaterialesAlmacen),
     ROLES_ALMACEN,
     'nuevo-material',
     'Nuevo material',
   ),
-  pantalla(
+  pantallaLazy(
     'almacen/materiales/movimiento',
-    MaterialesAlmacen,
+    () => import('./pages/materiales-almacen/materiales-almacen').then(m => m.MaterialesAlmacen),
     ROLES_ALMACEN,
     'nuevo-movimiento',
     'Movimiento de material',
   ),
-  pantalla(
+  pantallaLazy(
     'almacen/herramientas',
-    HerramientasAlmacen,
+    () => import('./pages/herramientas-almacen/herramientas-almacen').then(m => m.HerramientasAlmacen),
     ROLES_ALMACEN,
     'listado',
     'Almacén herramientas',
   ),
-  pantalla(
+  pantallaLazy(
     'almacen/herramientas/nueva',
-    HerramientasAlmacen,
+    () => import('./pages/herramientas-almacen/herramientas-almacen').then(m => m.HerramientasAlmacen),
     ROLES_ALMACEN,
     'nueva-herramienta',
     'Nueva herramienta',
   ),
-  pantalla(
+  pantallaLazy(
     'almacen/herramientas/movimiento',
-    HerramientasAlmacen,
+    () => import('./pages/herramientas-almacen/herramientas-almacen').then(m => m.HerramientasAlmacen),
     ROLES_ALMACEN,
     'nuevo-movimiento',
     'Movimiento de herramienta',

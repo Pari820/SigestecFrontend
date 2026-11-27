@@ -1,20 +1,19 @@
 import { Routes } from '@angular/router';
-import { Programaciones } from './pages/programaciones/programaciones';
 import { ROLES_PLAN } from '../../core/config/roles';
-import { pantalla } from '../../shared/utils/pantalla-route';
+import { pantallaLazy } from '../../shared/utils/pantalla-route';
 export const programacionesRoutes: Routes = [
-  pantalla('programaciones', Programaciones, ROLES_PLAN, 'listado', 'Programaciones de servicio'),
-  pantalla('programaciones/nueva', Programaciones, ROLES_PLAN, 'nuevo', 'Programar servicio'),
-  pantalla(
+  pantallaLazy('programaciones', () => import('./pages/programaciones/programaciones').then(m => m.Programaciones), ROLES_PLAN, 'listado', 'Programaciones de servicio'),
+  pantallaLazy('programaciones/nueva', () => import('./pages/programaciones/programaciones').then(m => m.Programaciones), ROLES_PLAN, 'nuevo', 'Programar servicio'),
+  pantallaLazy(
     'programaciones/editar/:id',
-    Programaciones,
+    () => import('./pages/programaciones/programaciones').then(m => m.Programaciones),
     ROLES_PLAN,
     'editar',
     'Reprogramar servicio',
   ),
-  pantalla(
+  pantallaLazy(
     'programaciones/ver/:id',
-    Programaciones,
+    () => import('./pages/programaciones/programaciones').then(m => m.Programaciones),
     ROLES_PLAN,
     'detalle',
     'Detalle de programación',

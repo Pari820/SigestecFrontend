@@ -17,3 +17,19 @@ export function pantalla(
     title: titulo,
   };
 }
+
+export function pantallaLazy(
+  path: string,
+  loadComponent: () => Promise<any>,
+  roles: string[],
+  vista: string,
+  titulo: string,
+): Route {
+  return {
+    path,
+    loadComponent,
+    canActivate: [rolesGuard],
+    data: { roles, vista },
+    title: titulo,
+  };
+}
